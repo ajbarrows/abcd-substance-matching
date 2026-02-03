@@ -9,6 +9,7 @@ ABCD Study substance use data processing and propensity score matching utilities
 Suggest using symbolic links to map ABCD 6.0 release data:
 
 `6.0/rawdata/phenotype/` --> `data/raw/phenotype`
+
 `6.0/concat/substance_use/tlfb/tlfb_raw.parquet` --> `data/raw/tlfb_raw.parquet`
 
 

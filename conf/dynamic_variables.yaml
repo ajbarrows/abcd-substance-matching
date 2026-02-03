@@ -1,0 +1,157 @@
+ab_g_dyn:
+  ab_g_dyn__visit_age: age
+  ab_g_dyn__visit_dtt: reference_date
+ab_p_demo:
+  ab_p_demo__edu__slf_001: parent_highest_ed
+  ab_p_demo__marital__slf_001: parent_married
+su_y_sui:
+  su_y_sui__day_count: sui_day_count
+  su_y_sui__use__alc__sip_001: alcsip
+  su_y_sui__use__alc__sip_001__l: lastvisit_alcsip
+  su_y_sui__use__alc_001: alcuse
+  su_y_sui__use__alc_001__l: lastvisit_alcuse
+  su_y_sui__use__mj__puff_001: cannabis
+  su_y_sui__use__mj__puff_001__l: lastvisit_cannabis
+  su_y_sui__use__nic__puff_001: tobacco
+  su_y_sui__use__nic__puff_001__l: lastvisit_tobacco
+  su_y_sui__nic__cig__lt_001: lifetime_number_cigarettes
+  su_y_sui__nic__chew__lt_001: lifetime_number_chew
+su_y_lowuse:
+  su_y_lowuse__nic_003: number_puffs_cig_or_ecig_since_last_visit
+mr_y_adm__info:
+  mr_y_adm__info__dev_serial: scanner_id
+nc_y_nihtb:
+  nc_y_nihtb__comp__cryst__uncor_score: nihtb_cryst_uncorrected
+  nc_y_nihtb__comp__fluid__uncor_score: nihtb_fluid_uncorrected
+mh_y_upps:
+  mh_y_upps__nurg_sum: upps_negative_urgency
+  mh_y_upps__pers_sum: upps_lackof_perseverence
+  mh_y_upps__plan_sum: upps_lackof_planning
+  mh_y_upps__purg_sum: upps_positive_urgency
+  mh_y_upps__sens_sum: upps_sensation_seeking
+ph_y_mctq:
+  ph_y_mctq__fd__sleep_dur: sleep_duration_freeday
+  ph_y_mctq__sd__sleep_dur: sleep_duration_schoolday
+  ph_y_mctq__sleep_dur: sleep_duration
+nt_y_stq:
+  nt_y_stq__screen__wkdy_sum: screentime_weekday
+  nt_y_stq__screen__wknd_sum: screentime_weekend
+mh_y_bisbas:
+  mh_y_bisbas_dtt: bisbas_date
+  mh_y_bisbas__bas__rr_sum__v01: bisbas_rew_resp
+  mh_y_bisbas__bas__fs_sum: bisbas_fun_seek
+su_y_udstox:
+  su_y_udstox__rslt__mj__r01_001: urine_mj1
+  su_y_udstox__rslt__mj__r02_001: urine_mj2
+  su_y_udstox__rslt__mj__r03_001: urine_mj3
+  su_y_udstox__rslt__mj__r04_001: urine_mj4
+su_y_oftox:
+  su_y_oftox__rslt__mj__r01_001: saliva_mj
+su_y_nictox:
+  su_y_nictox__rslt__r01_001: nic_alert1
+  su_y_nictox__rslt__r01_002: nic_alert2
+  su_y_nictox__rslt__r02_001: nic_alert3
+  su_y_nictox__rslt__r02_002: nic_alert4
+su_y_hairtox:
+  su_y_hairtox__rslt__mj__thc_cnf: mass_spect_thc
+  su_y_hairtox__rslt__mj__thcv_cnf: mass_spect_thcv
+  su_y_hairtox__rslt__mj__thccooh_cnf: mass_spect_thcooh
+ph_p_pds:
+  ph_p_pds__m_categ: puberty_male
+  ph_p_pds__f_categ: puberty_female
+# "cbcl_q105_p": Uses drugs for non medical purposes (don't include alcohol or tobacco)
+mh_p_cbcl:
+  mh_p_cbcl__aggr_001: cbcl_q19_p
+  mh_p_cbcl__aggr_002: cbcl_q20_p
+  mh_p_cbcl__aggr_003: cbcl_q68_p
+  mh_p_cbcl__aggr_004: cbcl_q87_p
+  mh_p_cbcl__aggr_005: cbcl_q88_p
+  mh_p_cbcl__aggr_006: cbcl_q89_p
+  mh_p_cbcl__aggr_007: cbcl_q94_p
+  mh_p_cbcl__aggr__adhd_001: cbcl_q104_p
+  mh_p_cbcl__aggr__cond_001: cbcl_q16_p
+  mh_p_cbcl__aggr__cond_002: cbcl_q21_p
+  mh_p_cbcl__aggr__cond_003: cbcl_q37_p
+  mh_p_cbcl__aggr__cond_004: cbcl_q57_p
+  mh_p_cbcl__aggr__cond_005: cbcl_q97_p
+  mh_p_cbcl__aggr__opp_001: cbcl_q03_p
+  mh_p_cbcl__aggr__opp_002: cbcl_q22_p
+  mh_p_cbcl__aggr__opp_003: cbcl_q23_p
+  mh_p_cbcl__aggr__opp_004: cbcl_q86_p
+  mh_p_cbcl__aggr__opp_005: cbcl_q95_p
+  mh_p_cbcl__rule_001: cbcl_q02_p
+  mh_p_cbcl__rule_002: cbcl_q63_p
+  mh_p_cbcl__rule_003: cbcl_q73_p
+  mh_p_cbcl__rule_004: cbcl_q96_p
+  mh_p_cbcl__rule_005: cbcl_q99_p
+  mh_p_cbcl__rule__cond_001: cbcl_q26_p
+  mh_p_cbcl__rule__cond_002: cbcl_q28_p
+  mh_p_cbcl__rule__cond_003: cbcl_q39_p
+  mh_p_cbcl__rule__cond_004: cbcl_q43_p
+  mh_p_cbcl__rule__cond_005: cbcl_q67_p
+  mh_p_cbcl__rule__cond_006: cbcl_q72_p
+  mh_p_cbcl__rule__cond_007: cbcl_q81_p
+  mh_p_cbcl__rule__cond_008: cbcl_q82_p
+  mh_p_cbcl__rule__cond_009: cbcl_q90_p
+  mh_p_cbcl__rule__cond_010: cbcl_q101_p
+  mh_p_cbcl__rule__cond_011: cbcl_q106_p
+  mh_p_cbcl__synd__int_sum: 'cbcl_internal'
+  mh_p_cbcl__synd__ext_sum: 'cbcl_external'
+  mh_p_cbcl__synd__attn_sum: 'cbcl_attention'
+  mh_p_cbcl__synd__aggr_sum: 'cbcl_aggressive'
+  mh_p_cbcl__synd__anxdep_sum: 'cbcl_anxious_depressed'
+  mh_p_cbcl__synd__som_sum: 'cbcl_somatic'
+  mh_p_cbcl__synd__wthdep_sum: 'cbcl_withdrawn'
+  mh_p_cbcl__synd__soc_sum: 'cbcl_social'
+  mh_p_cbcl__synd__tho_sum: 'cbcl_thought'
+  mh_p_cbcl__synd__othpr_sum: 'cbcl_other'
+  mh_p_cbcl__synd__rule_sum: 'cbcl_rulebreaking'
+mh_y_bpm:
+  mh_y_bpm__int_sum: bpm_internal
+ph_p_dhx:
+  ph_p_dhx__coc_001a: cocaine_before_knowing_pregnant
+  ph_p_dhx__coc_001b: cocaine_after_knowing_pregnant
+  ph_p_dhx__nic_001a: tobacco_before_knowing_pregnant
+  ph_p_dhx__nic_001b: tobacco_after_knowing_pregnant
+  ph_p_dhx__mj_001a: cannabis_before_knowing_pregnant
+  ph_p_dhx__mj_001b: cannabis_after_knowing_pregnant
+  ph_p_dhx__opi_001a: opioids_before_knowing_pregnant
+  ph_p_dhx__opi_001b: opioids_after_knowing_pregnant
+  ph_p_dhx__rxpain_001a: oxycontin_before_knowing_pregnant
+  ph_p_dhx__rxpain_001b: oxycontin_after_knowing_pregnant
+  ph_p_dhx__alc_001a: alcohol_before_knowing_pregnant
+  ph_p_dhx__alc_001b: alcohol_after_knowing_pregnant
+su_y_mysu:
+  su_y_mysu_age: midyear_pi_age
+  su_y_mysu_dtt: midyear_pi_date
+  su_y_mysu__use__mj__1mo_001: su_y_mysu__use__mj__1mo_001
+  su_y_mysu__use__mj__6mo_001: su_y_mysu__use__mj__6mo_001
+  su_y_mysu__use__mj__conc__1mo_001: su_y_mysu__use__mj__conc__1mo_001
+  su_y_mysu__use__mj__conc__1wk_001: su_y_mysu__use__mj__conc__1wk_001
+  su_y_mysu__use__mj__conc__6mo_002: su_y_mysu__use__mj__conc__6mo_002
+  su_y_mysu__use__mj__conc__pipe__6mo_001: su_y_mysu__use__mj__conc__pipe__6mo_001
+  su_y_mysu__use__mj__conc__pipe__first_001: su_y_mysu__use__mj__conc__pipe__first_001
+  su_y_mysu__use__mj__conc__vape__6mo_001: su_y_mysu__use__mj__conc__vape__6mo_001
+  su_y_mysu__use__mj__conc__vape__first_001: su_y_mysu__use__mj__conc__vape__first_001
+  su_y_mysu__use__mj__drink__tinc__1mo_001: su_y_mysu__use__mj__drink__tinc__1mo_001
+  su_y_mysu__use__mj__drink__tinc__1wk_001: su_y_mysu__use__mj__drink__tinc__1wk_001
+  su_y_mysu__use__mj__drink__tinc__6mo_001: su_y_mysu__use__mj__drink__tinc__6mo_001
+  su_y_mysu__use__mj__drink__tinc__6mo_002: su_y_mysu__use__mj__drink__tinc__6mo_002
+  su_y_mysu__use__mj__drink__tinc__first_001: su_y_mysu__use__mj__drink__tinc__first_001
+  su_y_mysu__use__mj__edbl__1mo_001: su_y_mysu__use__mj__edbl__1mo_001
+  su_y_mysu__use__mj__edbl__1wk_001: su_y_mysu__use__mj__edbl__1wk_001
+  su_y_mysu__use__mj__edbl__6mo_001: su_y_mysu__use__mj__edbl__6mo_001
+  su_y_mysu__use__mj__edbl__6mo_002: su_y_mysu__use__mj__edbl__6mo_002
+  su_y_mysu__use__mj__edbl__first_001: su_y_mysu__use__mj__edbl__first_001
+  su_y_mysu__use__mj__smoke__1mo_001: su_y_mysu__use__mj__smoke__1mo_001
+  su_y_mysu__use__mj__smoke__1wk_001: su_y_mysu__use__mj__smoke__1wk_001
+  su_y_mysu__use__mj__smoke__6mo_001: su_y_mysu__use__mj__smoke__6mo_001
+  su_y_mysu__use__mj__smoke__6mo_002: su_y_mysu__use__mj__smoke__6mo_002
+  su_y_mysu__use__mj__smoke__first_001: su_y_mysu__use__mj__smoke__first_001
+  su_y_mysu__use__mj__synth__1mo_001: su_y_mysu__use__mj__synth__1mo_001
+  su_y_mysu__use__mj__synth__1wk_001: su_y_mysu__use__mj__synth__1wk_001
+  su_y_mysu__use__mj__synth__6mo_001: su_y_mysu__use__mj__synth__6mo_001
+  su_y_mysu__use__mj__synth__6mo_002: su_y_mysu__use__mj__synth__6mo_002
+  su_y_mysu__use__mj__synth__first_001: su_y_mysu__use__mj__synth__first_001
+  su_y_mysu__use__mj__vape__6mo_001: su_y_mysu__use__mj__vape__6mo_001
+  su_y_mysu__use__mj__vape__first_001: su_y_mysu__use__mj__vape__first_001

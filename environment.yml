@@ -1,0 +1,15 @@
+name: abcd-substance-matching-r
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - r-base>=4.0
+  - r-yaml
+  - r-arrow
+  - r-dplyr
+  - r-tidyr
+  - r-stringr
+  - r-tibble
+  - r-ggplot2
+  - r-matchit
+  - r-cobalt

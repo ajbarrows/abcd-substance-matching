@@ -1,0 +1,48 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "abcd_substance_matching"
+version = "0.0.1"
+description = "ABCD Study substance use data processing and propensity score matching utilities."
+authors = [
+  { name = "Tony Barrows" },
+]
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "pandas",
+    "pyarrow",
+    "pyyaml",
+    "python-dateutil",
+    "openpyxl",
+    "polars>=1.37.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff",
+    "ipython",
+    "ipykernel",
+]
+
+[tool.ruff]
+line-length = 99
+src = ["abcd_substance_matching"]
+
+[tool.ruff.lint]
+extend-select = ["I"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["abcd_substance_matching"]
+force-sort-within-sections = true
+
+[dependency-groups]
+dev = [
+    "ruff>=0.14.14",
+]

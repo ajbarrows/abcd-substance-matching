@@ -1,0 +1,297 @@
+# Example mappings configuration
+# Copy this file to mappings.yaml and customize for your study
+
+session_map: {
+    'ses-00A': "baseline",
+    'ses-00M': "month_6",
+    'ses-01A': 'year_1',
+    'ses-01M': 'month_18',
+    'ses-02A': 'year_2',
+    'ses-02M': 'month_30',
+    'ses-03A': 'year_3',
+    'ses-03M': 'month_42',
+    'ses-04A': 'year_4',
+    'ses-04M': 'month_54',
+    'ses-05A': 'year_5',
+    'ses-05M': 'month_66',
+    'ses-06A': 'year_6'
+}
+
+timepoints: [
+    'baseline',
+    'year_1',
+    'year_2',
+    'year_3',
+    'year_4',
+    'year_5',
+    'year_6'
+]
+
+lagging_map: {
+    "month_6": "year_1",
+    "month_18": "year_2",
+    "month_30": "year_3",
+    "month_42": "year_4",
+    "month_54": "year_5",
+    "month_66": "year_6"
+}
+
+# Substance categories for TLFB aggregation
+alcohol_related: [
+     'Alcohol'
+]
+
+tobacco_related: [
+    'Electronic Nicotine or Vaping Products',
+    'Tobacco in a Pipe',
+    'Blunts or Combined Tobacco and Marijuana in Joints',
+    'Tobacco Cigarette',
+    'Cigars, Little Cigars, or Cigarillos',
+    'Smokeless Tobacco, Chew, or Snus',
+    'Hookah with Tobacco',
+]
+
+cannabis_related: [
+    "Smoking Marijuana Flower",
+    "Vaped Marijuana Flower",
+    'Blunts or Combined Tobacco and Marijuana in Joints',
+    'CBD (Non-Medical Use)',
+    'Vaped Marijuana Oils or Concentrates',
+    'Marijuana Edibles',
+    'Smoking Marijuana Oils or Concentrates',
+    "'Fake' Marijuana or Synthetics"
+]
+
+substances:
+    - cannabis
+    - alcohol
+    - tobacco
+
+# Initiation group definitions
+initiation_groups: {
+    'baseline': 'pre-early',
+    'year_1': 'pre-early',
+    'year_2': 'pre-early',
+    'year_3': 'early',
+    'year_4': 'early',
+    'year_5': 'late',
+    'year_6': 'late'
+}
+
+# Category recoding mappings
+education_mapping: {
+   '1st grade': 'Less than associates degree',
+   '2nd grade': 'Less than associates degree',
+   '3rd grade': 'Less than associates degree',
+   '4th grade': 'Less than associates degree',
+   '5th grade': 'Less than associates degree',
+   '6th grade': 'Less than associates degree',
+   '7th grade': 'Less than associates degree',
+   '8th grade': 'Less than associates degree',
+   '9th grade': 'Less than associates degree',
+   '10th grade': 'Less than associates degree',
+   '11th grade': 'Less than associates degree',
+   '12th grade, no diploma': 'Less than associates degree',
+   'High school graduate': 'Less than associates degree',
+   'GED or equivalent': 'Less than associates degree',
+   'Some college, no degree': 'Less than associates degree',
+   'Associate degree: Occupational, Technical, or Vocational': 'Associates degree or greater',
+   'Associate degree: Academic Program': 'Associates degree or greater',
+   "Bachelor's degree (ex. BA, AB, BS, BBS)": 'Associates degree or greater',
+   "Master's degree (ex. MA, MS, MEng, MEd, MBA)": 'Associates degree or greater',
+   'Professional School degree (ex. MD, DDS, DVN, JD)': 'Associates degree or greater',
+   'Doctoral degree (ex. PhD, EdD)': 'Associates degree or greater'
+}
+
+education_categories:
+    - "Less than associates degree"
+    - "Associates degree or greater"
+
+race_mapping: {
+    White: 'White',
+    Hispanic: 'Non-White',
+    Black: 'Non-White',
+    Asian: 'Non-White',
+    Other: 'Non-White'
+}
+
+race_categories:
+    - White
+    - "Non-White"
+
+marital_status_mapping: {
+    Married: 'Married',
+    Never married: 'Not_Married',
+    Divorced: 'Not_Married',
+    Living with partner: 'Not_Married',
+    Separated: 'Not_Married',
+    Widowed: 'Not_Married'
+}
+
+marital_categories:
+    - Married
+    - Not_Married
+
+demo_vars: 
+    - age
+    - parent_highest_ed
+    - parent_married
+
+prenatal_vars:
+    - cocaine_before_knowing_pregnant
+    - cocaine_after_knowing_pregnant
+    - tobacco_before_knowing_pregnant
+    - tobacco_after_knowing_pregnant
+    - cannabis_before_knowing_pregnant
+    - cannabis_after_knowing_pregnant
+    - opioids_before_knowing_pregnant
+    - opioids_after_knowing_pregnant
+    - oxycontin_before_knowing_pregnant
+    - oxycontin_after_knowing_pregnant
+    - alcohol_before_knowing_pregnant
+    - alcohol_after_knowing_pregnant
+
+nihtb_vars:
+    - nihtb_cryst_uncorrected
+    - nihtb_fluid_uncorrected
+
+# prenatal_exposure_vars:
+#     - 'prenatal_cananbis'
+#     - 'prenatal_alcohol'
+#     - 'prenatal_tobacco'
+#     - 'prenatal_other'
+
+cbcl_external_nodrug: [
+    'cbcl_q19_p',
+    'cbcl_q20_p',
+    'cbcl_q68_p',
+    'cbcl_q87_p',
+    'cbcl_q88_p',
+    'cbcl_q89_p',
+    'cbcl_q94_p',
+    'cbcl_q104_p',
+    'cbcl_q16_p',
+    'cbcl_q21_p',
+    'cbcl_q37_p',
+    'cbcl_q57_p',
+    'cbcl_q97_p',
+    'cbcl_q03_p',
+    'cbcl_q22_p',
+    'cbcl_q23_p',
+    'cbcl_q86_p',
+    'cbcl_q95_p',
+    'cbcl_q02_p',
+    'cbcl_q63_p',
+    'cbcl_q73_p',
+    'cbcl_q96_p',
+    'cbcl_q99_p',
+    'cbcl_q26_p',
+    'cbcl_q28_p',
+    'cbcl_q39_p',
+    'cbcl_q43_p',
+    'cbcl_q67_p',
+    'cbcl_q72_p',
+    'cbcl_q81_p',
+    'cbcl_q82_p',
+    'cbcl_q90_p',
+    'cbcl_q101_p',
+    'cbcl_q106_p'
+]
+
+bpm_vars:
+    - bpm_internal
+
+puberty_vars:
+    - puberty_date
+    - puberty_male
+    - puberty_female
+
+tlfb_summary_vars: [
+    'sui_day_count', # used as indicator (# of days covered by SUI)
+    'alcsip',
+    'lastvisit_alcsip',
+    'alcuse',
+    'lastvisit_alcuse',
+    "cannabis",
+    "lastvisit_cannabis",
+    "tobacco",
+    'lastvisit_tobacco'
+]
+
+midyear_su_vars:
+  - su_y_mysu__use__mj__1mo_001
+  - su_y_mysu__use__mj__6mo_001
+  - su_y_mysu__use__mj__conc__1mo_001
+  - su_y_mysu__use__mj__conc__1wk_001
+  - su_y_mysu__use__mj__conc__6mo_002
+  - su_y_mysu__use__mj__conc__pipe__6mo_001
+  - su_y_mysu__use__mj__conc__pipe__first_001
+  - su_y_mysu__use__mj__conc__vape__6mo_001
+  - su_y_mysu__use__mj__conc__vape__first_001
+  - su_y_mysu__use__mj__drink__tinc__1mo_001
+  - su_y_mysu__use__mj__drink__tinc__1wk_001
+  - su_y_mysu__use__mj__drink__tinc__6mo_001
+  - su_y_mysu__use__mj__drink__tinc__6mo_002
+  - su_y_mysu__use__mj__drink__tinc__first_001
+  - su_y_mysu__use__mj__edbl__1mo_001
+  - su_y_mysu__use__mj__edbl__1wk_001
+  - su_y_mysu__use__mj__edbl__6mo_001
+  - su_y_mysu__use__mj__edbl__6mo_002
+  - su_y_mysu__use__mj__edbl__first_001
+  - su_y_mysu__use__mj__smoke__1mo_001
+  - su_y_mysu__use__mj__smoke__1wk_001
+  - su_y_mysu__use__mj__smoke__6mo_001
+  - su_y_mysu__use__mj__smoke__6mo_002
+  - su_y_mysu__use__mj__smoke__first_001
+  - su_y_mysu__use__mj__synth__1mo_001
+  - su_y_mysu__use__mj__synth__1wk_001
+  - su_y_mysu__use__mj__synth__6mo_001
+  - su_y_mysu__use__mj__synth__6mo_002
+  - su_y_mysu__use__mj__synth__first_001
+  - su_y_mysu__use__mj__vape__6mo_001
+  - su_y_mysu__use__mj__vape__first_001
+
+
+urine_tox_vars:
+  - urine_mj1
+  - urine_mj2
+  - urine_mj3
+  - urine_mj4
+
+sal_tox_vars:
+  - saliva_mj
+
+nic_tox_vars:
+  - nic_alert1
+  - nic_alert2
+  - nic_alert3
+  - nic_alert4
+
+hair_tox_vars:
+  - mass_spect_thc
+  - mass_spect_thcv
+  - mass_spect_thcooh
+
+dob_columns:
+  - age
+  - reference_date
+
+race_vars:
+    - race_ethnicity_6level
+
+
+use_threshold: 20
+early_tpt: year_4
+late_tpt: year_6
+
+early_match_timepoints:
+    - baseline
+    - year_1
+    - year_2
+
+late_match_timepoints:
+    - baseline
+    - year_1
+    - year_2
+    - year_3
+    - year_4

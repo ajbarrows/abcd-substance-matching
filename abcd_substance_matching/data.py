@@ -831,11 +831,8 @@ def combine_prenatal_exposure(df: pd.DataFrame) -> pd.DataFrame:
             period=lambda x: x['split'].str[1]
         )
         .pivot(index=['participant_id', 'drug'], columns=['period'], values='value')
-        .assign(
-            combined=lambda x: (x['after'] == 1) | (x['before'] == 1),
-            prenatal=lambda x: x['combined'].map({True: 1, False: 0}).astype('category')
-        )
-        .drop(columns=['before', 'after', 'combined'])
+        .assign(prenatal=lambda x: (x['after'] == 'Yes') | (x['before'] == 'Yes'))
+        .drop(columns=['before', 'after'])
         .reset_index()
         .assign(drug=lambda x: 'prenatal_' + x['drug'])
         .pivot(index='participant_id', columns='drug', values='prenatal')
@@ -888,9 +885,9 @@ def process_covars(
                 ordered=True
             ),
             prenatal_other=lambda x: np.where(
-                (x['prenatal_cocaine'] == 'Yes') |
-                (x['prenatal_opioids'] == 'Yes') |
-                (x['prenatal_oxycontin'] == 'Yes'),
+                (x['prenatal_cocaine']) |
+                (x['prenatal_opioids']) |
+                (x['prenatal_oxycontin']),
                 'Yes', 'No'
             ),
             race_ethnicity_6level=lambda x: pd.Categorical(
@@ -969,7 +966,8 @@ def subset_covariates(df: pd.DataFrame, mappings: dict) -> pd.DataFrame:
             + mappings['bpm_vars'] \
             + mappings['prenatal_vars'] \
             + mappings['race_vars'] \
-            + cbcl_final_vars
+            + cbcl_final_vars \
+            + ['puberty']
 
     cbcl = df.set_index(INDEX_COLS).pipe(load_cbcl, cbcl_final_vars, mappings['cbcl_external_nodrug'])
     puberty = (
@@ -1199,58 +1197,3 @@ def make_full_covariates_dataset(
     late = process_group(full_df, 'late')
 
     return full_df, early, late
-
-
-if __name__ == "__main__":
-
-    data_path = "../data/raw/phenotype/"
-    dictionary_levels_path = "../data/raw/data_dictionary_levels.xlsx"
-    tlfb_path = "../data/raw/concat/substance_use/tlfb/tlfb_raw.parquet"
-    output_path = "../data/processed/"
-
-    filepaths = load_yaml("../conf/filepaths.yaml")
-    dynamic_vars = load_yaml(filepaths['dynamic_vars'])
-    static_vars = load_yaml(filepaths['static_vars'])
-    mappings = load_yaml(filepaths['mappings'])
-
-    levels = pd.read_excel(filepaths['dictionary_levels_path'], sheet_name='levels')
-
-    full_dataset = make_full_dataset(
-        static_vars,
-        dynamic_vars,
-        mappings,
-        filepaths['data_path']
-    )
-
-    covars = load_covariates(
-        full_dataset,
-        static_vars,
-        dynamic_vars,
-        mappings,
-        levels
-    )
-
-    selfreport = (
-        subset_selfreport(full_dataset, mappings)
-        .join(subset_midyear(full_dataset, mappings))
-        .join(subset_biochem(full_dataset, mappings))
-    )
-
-    tlfb = (
-        pd.read_parquet(filepaths['tlfb_path'])
-        .pipe(process_tlfb, full_dataset, mappings)
-    )
-
-    cannabis_agg = process_substance(tlfb, selfreport, mappings, 'cannabis')
-    polysubstance = make_polysubstance(tlfb, selfreport, mappings)
-
-    full_df, early, late = make_full_covariates_dataset(
-        covars,
-        cannabis_agg,
-        polysubstance,
-        mappings
-    )
-
-    full_df.to_parquet(filepaths['full_df'])
-    early.to_parquet(filepaths['early'])
-    late.to_parquet(filepaths['late'])

@@ -1,0 +1,19 @@
+# Config paths
+dynamic_vars: "./conf/dynamic_variables.yaml"
+static_vars: "./conf/static_variables.yaml"
+mappings: "./conf/mappings.yaml"
+
+
+# Input data
+data_path: "./data/raw/phenotype/"
+dictionary_levels_path: "./data/raw/data_dictionary_levels.xlsx"
+tlfb_path: "./data/raw/concat/substance_use/tlfb/tlfb_raw.parquet"
+
+# Processed outputs
+full_df: "./data/processed/full_df.parquet"
+early: "./data/processed/early.parquet"
+late: "./data/processed/late.parquet"
+
+
+# Models
+# matching_models: "./models/matching/"

@@ -107,10 +107,6 @@ logs/
 .DS_Store
 Thumbs.db
 
-# Config files with actual paths (keep examples)
-conf/filepaths.yaml
-conf/mappings.yaml
-conf/variables.yaml
 
 notebooks/
 

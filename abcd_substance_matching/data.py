@@ -967,7 +967,7 @@ def subset_covariates(df: pd.DataFrame, mappings: dict) -> pd.DataFrame:
             + mappings['prenatal_vars'] \
             + mappings['race_vars'] \
             + cbcl_final_vars \
-            + ['puberty']
+            + ['puberty', 'sex_at_birth']
 
     cbcl = df.set_index(INDEX_COLS).pipe(load_cbcl, cbcl_final_vars, mappings['cbcl_external_nodrug'])
     puberty = (

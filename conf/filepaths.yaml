@@ -14,6 +14,12 @@ full_df: "./data/processed/full_df.parquet"
 early: "./data/processed/early.parquet"
 late: "./data/processed/late.parquet"
 
+full_never: "./data/processed/full_never.parquet"
+early_never: "./data/processed/early_never.parquet"
+late_never: "./data/processed/late_never.parquet"
+
+
+
 
 # Models
 # matching_models: "./models/matching/"

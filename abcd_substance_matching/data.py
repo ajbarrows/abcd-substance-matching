@@ -1197,3 +1197,233 @@ def make_full_covariates_dataset(
     late = process_group(full_df, 'late')
 
     return full_df, early, late
+
+
+def get_other_use_rates(df: pd.DataFrame) -> pd.DataFrame:
+    """Get mean and std of alcohol/tobacco use rates among cannabis users by timepoint.
+
+    Computes cumulative alcohol and tobacco use statistics for early and late
+    cannabis initiation groups at each session. These rates serve as reference
+    distributions for aligning non-cannabis users' other substance use.
+
+    Args:
+        df: Full dataset with MultiIndex (participant_id, session_id) and columns
+            initiation_group, cumulative_alcohol, cumulative_tobacco.
+
+    Returns:
+        DataFrame indexed by (session_id, initiation_group) with columns:
+        cumulative_alcohol_mean, cumulative_alcohol_std,
+        cumulative_tobacco_mean, cumulative_tobacco_std.
+    """
+    return (
+        df
+        .query("initiation_group.isin(['early', 'late'])")
+        .filter(['initiation_group', 'cumulative_alcohol', 'cumulative_tobacco'])
+        .reset_index()
+        .set_index(['participant_id'])
+        .groupby(['session_id', 'initiation_group'])
+        .agg(['mean', 'std'])
+        .pipe(lambda d: d.set_axis(
+            ["_".join(col) for col in d.columns], axis="columns"
+        ))
+    )
+
+
+def define_other_users(df: pd.DataFrame) -> pd.DataFrame:
+    """Subset participants who never used cannabis.
+
+    Args:
+        df: Full dataset with initiation_group column.
+
+    Returns:
+        DataFrame of never-cannabis users with cumulative_alcohol and
+        cumulative_tobacco columns, indexed by (participant_id, session_id).
+    """
+    return (
+        df
+        .query("initiation_group == 'never'")
+        .filter(items=['cumulative_alcohol', 'cumulative_tobacco'])
+    )
+
+
+def get_initiation_point(
+    df: pd.DataFrame, mappings: dict
+) -> pd.DataFrame:
+    """Find the first timepoint at which a non-cannabis user initiated alcohol or tobacco.
+
+    Args:
+        df: DataFrame of non-cannabis users (from define_other_users) with
+            cumulative_alcohol and cumulative_tobacco columns.
+        mappings: Dictionary containing 'initiation_groups' mapping session IDs
+            to group labels (early/late).
+
+    Returns:
+        DataFrame indexed by participant_id with an initiation_group column.
+    """
+    return (
+        df
+        .query("cumulative_alcohol > 0 | cumulative_tobacco > 0")
+        .sort_index()
+        .reset_index()
+        .drop_duplicates('participant_id')
+        .assign(
+            initiation_group=lambda x: x['session_id'].replace(
+                mappings['initiation_groups']
+            )
+        )
+        .filter(['participant_id', 'initiation_group'])
+        .reset_index(drop=True)
+        .set_index(['participant_id'])
+    )
+
+
+def align_use_rates(
+    other_users: pd.DataFrame,
+    other_use_rates: pd.DataFrame,
+    init_points: pd.DataFrame,
+) -> pd.DataFrame:
+    """Identify non-cannabis users whose alcohol/tobacco use falls within 1 SD of cannabis users.
+
+    Joins non-cannabis users to the reference use-rate statistics (from cannabis
+    users) at matching timepoints and initiation groups. Retains only participants
+    whose cumulative alcohol and tobacco use stays within one standard deviation
+    of the cannabis-user mean across all timepoints.
+
+    Args:
+        other_users: Non-cannabis users from define_other_users.
+        other_use_rates: Reference rates from get_other_use_rates.
+        init_points: Initiation points from get_initiation_point.
+
+    Returns:
+        DataFrame with columns participant_id and alctob_initiation_group for
+        participants whose use is aligned with cannabis users' rates.
+    """
+    joined = (
+        other_users
+        .reset_index()
+        .set_index(["participant_id"])
+        .join(init_points)
+        .dropna()
+        .reset_index()
+        .set_index(["session_id", "initiation_group"])
+        .join(other_use_rates)
+        .reset_index()
+        .rename(columns={'initiation_group': "alctob_initiation_group"})
+    )
+
+    use_groups = (
+        joined
+        .assign(
+            alc_high=lambda x: x['cumulative_alcohol_mean'] + x['cumulative_alcohol_std'],
+            alc_low=lambda x: x['cumulative_alcohol_mean'] - x['cumulative_alcohol_std'],
+            tob_high=lambda x: x['cumulative_tobacco_mean'] + x['cumulative_tobacco_std'],
+            tob_low=lambda x: x['cumulative_tobacco_mean'] - x['cumulative_tobacco_std']
+        )
+        .assign(
+            like_alcohol=lambda x: (
+                (x['cumulative_alcohol'] <= x['alc_high'])
+                & (x['cumulative_alcohol'] >= x['alc_low'])
+            ),
+            like_tobacco=lambda x: (
+                (x['cumulative_tobacco'] <= x['tob_high'])
+                & (x['cumulative_tobacco'] >= x['tob_low'])
+            )
+        )
+        .filter(['participant_id', 'session_id', 'like_alcohol',
+                 'like_tobacco', 'alctob_initiation_group'])
+    )
+
+    full_tpt_aligned = (
+        use_groups
+        .pivot(index=['participant_id', 'alctob_initiation_group'],
+               columns='session_id')
+        .pipe(lambda d: d[~d.map(lambda x: x is False).any(axis=1)])
+        .pipe(lambda d: d.set_axis(
+            ["_".join(col).strip('_') for col in d.columns], axis="columns"
+        ))
+        .reset_index()
+    )
+    return full_tpt_aligned.filter(['participant_id', 'alctob_initiation_group'])
+
+
+def define_never_users_of_anything(other_users: pd.DataFrame) -> pd.DataFrame:
+    """Identify participants who never used any substance (cannabis, alcohol, or tobacco).
+
+    From the set of non-cannabis users, filters to those whose cumulative alcohol
+    and tobacco use is zero at their last observed timepoint.
+
+    Args:
+        other_users: Non-cannabis users from define_other_users.
+
+    Returns:
+        DataFrame with columns participant_id and alctob_initiation_group ('never').
+    """
+    return (
+        other_users
+        .sort_index(ascending=False)
+        .reset_index()
+        .drop_duplicates(['participant_id'])
+        .query("cumulative_alcohol == 0 & cumulative_tobacco == 0")
+        .set_index(['participant_id'])
+        .assign(alctob_initiation_group='never')
+        .filter(['participant_id', 'alctob_initiation_group'])
+        .reset_index()
+    )
+
+
+def join_never_users(
+    df: pd.DataFrame,
+    aligned_cannabis_naive: pd.DataFrame,
+    never_users: pd.DataFrame,
+) -> pd.DataFrame:
+    """Join aligned non-cannabis users and never-users back to the full dataset.
+
+    Args:
+        df: Full dataset DataFrame.
+        aligned_cannabis_naive: Aligned non-cannabis users from align_use_rates.
+        never_users: Never-users from define_never_users_of_anything.
+
+    Returns:
+        Long-format DataFrame containing only the selected non-cannabis
+        participants with an alctob_initiation_group column.
+    """
+    return (
+        pd.concat([aligned_cannabis_naive, never_users])
+        .set_index(["participant_id"])
+        .join(df.reset_index().set_index(["participant_id"]))
+        .reset_index()
+    )
+
+
+def make_never_users_dataset(
+    full_df: pd.DataFrame, mappings: dict
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Build a dataset of non-cannabis users with alcohol/tobacco use aligned to cannabis users.
+
+    This is the top-level function for the "other substance" matching pipeline.
+    It identifies non-cannabis users whose alcohol and tobacco use trajectories
+    fall within one standard deviation of cannabis users' rates, and combines
+    them with participants who never used any substance.
+
+    Args:
+        full_df: Full dataset DataFrame with MultiIndex (participant_id, session_id).
+        mappings: Configuration dictionary containing 'initiation_groups'.
+
+    Returns:
+        Tuple of (all, early, late) DataFrames, where all contains every
+        non-cannabis participant with an alctob_initiation_group column, and
+        early/late are subsets filtered to the respective initiation group.
+    """
+    cases_other_use_rates = get_other_use_rates(full_df)
+    other_users = define_other_users(full_df)
+    never_users = define_never_users_of_anything(other_users)
+    init_points = get_initiation_point(other_users, mappings)
+    aligned_cannabis_naive = align_use_rates(
+        other_users, cases_other_use_rates, init_points
+    )
+    joined = join_never_users(full_df, aligned_cannabis_naive, never_users)
+    return (
+        joined, 
+        joined.query("alctob_initiation_group == 'early'"),
+        joined.query("alctob_initiation_group == 'late'")
+    )

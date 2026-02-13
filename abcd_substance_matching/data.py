@@ -907,7 +907,7 @@ def process_covars(
 def pivot_wider(
     df: pd.DataFrame,
     match_timepoints: list,
-    constant_vars: str = 'sex|income|ethnicity|parent|prenatal|age'
+    constant_vars: str = 'sex|income|ethnicity|parent|prenatal|age|initiation'
 ) -> pd.DataFrame:
     """Pivot DataFrame to wide format for matching.
 
@@ -920,7 +920,7 @@ def pivot_wider(
         Wide-format DataFrame.
     """
     constant_cols = list(df.filter(regex=constant_vars).columns)
-    index = ['participant_id', 'initiation_group', 'initiation_timepoint']
+    index = ['participant_id']
 
     pivoted = (
         df
@@ -1151,6 +1151,49 @@ def process_missing_covars(
     )
 
 
+def process_group(
+    full_df: pd.DataFrame,
+    group: str,
+    mappings: dict,
+    threshold: int | None = 20,
+    substance: str = 'cannabis',
+) -> pd.DataFrame:
+    """Process a single initiation group for propensity score matching.
+
+    Filters to the target group plus never-users, optionally applies a lifetime
+    use threshold, collapses time-varying covariates to a single timepoint, and
+    pivots to wide format.
+
+    Args:
+        full_df: Long-format DataFrame with an initiation_group column.
+            May be MultiIndexed by (participant_id, session_id) or flat.
+        group: Initiation group to retain alongside 'never' ('early' or 'late').
+        mappings: Configuration dictionary with '{group}_match_timepoints'.
+        threshold: Minimum cumulative use days to retain treated participants,
+            or None to skip the threshold filter.
+        substance: Substance column used by lifetime_use_threshold.
+
+    Returns:
+        Wide-format DataFrame ready for matching.
+    """
+    df = full_df.loc[lambda x: x['initiation_group'].isin(['never', group])]
+
+    if isinstance(df.index, pd.MultiIndex):
+        df = df.reset_index()
+
+    if threshold is not None:
+        df = df.pipe(lifetime_use_threshold, threshold=threshold, substance=substance)
+
+    return (
+        df
+        .pipe(keep_single_tpt_vars, group)
+        .pipe(pivot_wider, mappings[f'{group}_match_timepoints'])
+        .pipe(exclude_incomplete_use_records)
+        .pipe(process_missing_covars)
+        .reset_index()
+    )
+
+
 def make_full_covariates_dataset(
     covars: pd.DataFrame,
     tlfb_agg: pd.DataFrame,
@@ -1180,21 +1223,8 @@ def make_full_covariates_dataset(
         )
     )
 
-    def process_group(full_df, group):
-        return (
-            full_df
-            .loc[lambda x: x['initiation_group'].isin(['never', group])]
-            .reset_index()
-            .pipe(lifetime_use_threshold, threshold=20)
-            .pipe(keep_single_tpt_vars, group)
-            .pipe(pivot_wider, mappings[f'{group}_match_timepoints'])
-            .pipe(exclude_incomplete_use_records)
-            .pipe(process_missing_covars)
-            .reset_index()
-        )
-
-    early = process_group(full_df, 'early')
-    late = process_group(full_df, 'late')
+    early = process_group(full_df, 'early', mappings)
+    late = process_group(full_df, 'late', mappings)
 
     return full_df, early, late
 
@@ -1258,7 +1288,8 @@ def get_initiation_point(
             to group labels (early/late).
 
     Returns:
-        DataFrame indexed by participant_id with an initiation_group column.
+        DataFrame indexed by participant_id with initiation_group and
+        initiation_timepoint columns.
     """
     return (
         df
@@ -1269,9 +1300,10 @@ def get_initiation_point(
         .assign(
             initiation_group=lambda x: x['session_id'].replace(
                 mappings['initiation_groups']
-            )
+            ),
+            initiation_timepoint=lambda x: x['session_id'],
         )
-        .filter(['participant_id', 'initiation_group'])
+        .filter(['participant_id', 'initiation_group', 'initiation_timepoint'])
         .reset_index(drop=True)
         .set_index(['participant_id'])
     )
@@ -1295,8 +1327,9 @@ def align_use_rates(
         init_points: Initiation points from get_initiation_point.
 
     Returns:
-        DataFrame with columns participant_id and alctob_initiation_group for
-        participants whose use is aligned with cannabis users' rates.
+        DataFrame with columns participant_id, alctob_initiation_group, and
+        initiation_timepoint for participants whose use is aligned with
+        cannabis users' rates.
     """
     joined = (
         other_users
@@ -1330,12 +1363,14 @@ def align_use_rates(
             )
         )
         .filter(['participant_id', 'session_id', 'like_alcohol',
-                 'like_tobacco', 'alctob_initiation_group'])
+                 'like_tobacco', 'alctob_initiation_group',
+                 'initiation_timepoint'])
     )
 
     full_tpt_aligned = (
         use_groups
-        .pivot(index=['participant_id', 'alctob_initiation_group'],
+        .pivot(index=['participant_id', 'alctob_initiation_group',
+                      'initiation_timepoint'],
                columns='session_id')
         .pipe(lambda d: d[~d.map(lambda x: x is False).any(axis=1)])
         .pipe(lambda d: d.set_axis(
@@ -1343,7 +1378,9 @@ def align_use_rates(
         ))
         .reset_index()
     )
-    return full_tpt_aligned.filter(['participant_id', 'alctob_initiation_group'])
+    return full_tpt_aligned.filter([
+        'participant_id', 'alctob_initiation_group', 'initiation_timepoint'
+    ])
 
 
 def define_never_users_of_anything(other_users: pd.DataFrame) -> pd.DataFrame:
@@ -1378,20 +1415,32 @@ def join_never_users(
 ) -> pd.DataFrame:
     """Join aligned non-cannabis users and never-users back to the full dataset.
 
+    Renames alctob_initiation_group to initiation_group and replaces the
+    original cannabis initiation_timepoint with the alcohol/tobacco one so
+    the output is compatible with process_group and pivot_wider.
+
     Args:
         df: Full dataset DataFrame.
         aligned_cannabis_naive: Aligned non-cannabis users from align_use_rates.
         never_users: Never-users from define_never_users_of_anything.
 
     Returns:
-        Long-format DataFrame containing only the selected non-cannabis
-        participants with an alctob_initiation_group column.
+        Long-format DataFrame with initiation_group reflecting alcohol/tobacco
+        initiation timing.
     """
     return (
         pd.concat([aligned_cannabis_naive, never_users])
+        .drop_duplicates(subset=['participant_id'], keep='first')
         .set_index(["participant_id"])
-        .join(df.reset_index().set_index(["participant_id"]))
+        .join(
+            df
+            .reset_index()
+            .set_index(["participant_id"])
+            .drop(columns='initiation_timepoint')
+        )
         .reset_index()
+        .drop(columns='initiation_group')
+        .rename(columns={'alctob_initiation_group': 'initiation_group'})
     )
 
 
@@ -1411,8 +1460,9 @@ def make_never_users_dataset(
 
     Returns:
         Tuple of (all, early, late) DataFrames, where all contains every
-        non-cannabis participant with an alctob_initiation_group column, and
-        early/late are subsets filtered to the respective initiation group.
+        non-cannabis participant with an initiation_group column reflecting
+        alcohol/tobacco initiation timing, and early/late are wide-format
+        subsets ready for matching.
     """
     cases_other_use_rates = get_other_use_rates(full_df)
     other_users = define_other_users(full_df)
@@ -1422,8 +1472,8 @@ def make_never_users_dataset(
         other_users, cases_other_use_rates, init_points
     )
     joined = join_never_users(full_df, aligned_cannabis_naive, never_users)
-    return (
-        joined, 
-        joined.query("alctob_initiation_group == 'early'"),
-        joined.query("alctob_initiation_group == 'late'")
-    )
+
+    early = process_group(joined, 'early', mappings, threshold=None)
+    late = process_group(joined, 'late', mappings, threshold=None)
+
+    return joined, early, late

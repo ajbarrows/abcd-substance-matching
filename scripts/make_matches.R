@@ -14,42 +14,32 @@ source("R/matching.R")
 # Load configuration
 config <- yaml::read_yaml("conf/filepaths.yaml")
 
-# Run matching for early initiation group
-message("Running matching for early initiation group...")
-early_match <- matching_pipeline(
-    input_path = config$early,
-    output_dir = "./models/matching/",
-    method = "full",
-    distance = "glm",
-    prefix = "early",
-    save_datasets = TRUE
-)
+run_and_save <- function(label, input_path, prefix, treatment_col = "initiation_group") {
+    message("\nRunning matching for ", label, "...")
+    match_out <- matching_pipeline(
+        input_path = input_path,
+        output_dir = "./models/matching/",
+        method = "full",
+        distance = "glm",
+        prefix = prefix,
+        save_datasets = TRUE,
+        treatment_col = treatment_col
+    )
 
-write_matched_data(early_match, filename = "early_matched.parquet")
-write_love_plot(early_match, filename = "early_love_plot.png")
+    write_matched_data(match_out, filename = paste0(prefix, "_matched.parquet"))
+    write_love_plot(match_out, filename = paste0(prefix, "_love_plot.png"))
 
-message("Early matching complete:")
-message("  - Treated: ", sum(early_match$treat))
-message("  - Controls: ", sum(early_match$treat == 0))
-message("  - Matched units: ", sum(early_match$weights > 0))
+    message(label, " matching complete:")
+    message("  - Treated: ", sum(match_out$treat))
+    message("  - Controls: ", sum(match_out$treat == 0))
+    message("  - Matched units: ", sum(match_out$weights > 0))
 
-# Run matching for late initiation group
-message("\nRunning matching for late initiation group...")
-late_match <- matching_pipeline(
-    input_path = config$late,
-    output_dir = "./models/matching/",
-    method = "full",
-    distance = "glm",
-    prefix = "late",
-    save_datasets = TRUE
-)
+    match_out
+}
 
-write_matched_data(late_match, filename = "late_matched.parquet")
-write_love_plot(late_match, filename = "late_love_plot.png")
-
-message("Late matching complete:")
-message("  - Treated: ", sum(late_match$treat))
-message("  - Controls: ", sum(late_match$treat == 0))
-message("  - Matched units: ", sum(late_match$weights > 0))
+early_match      <- run_and_save("early", config$early, "early")
+late_match       <- run_and_save("late",  config$late,  "late")
+early_never_match <- run_and_save("early never", config$early_never, "early_never")
+late_never_match  <- run_and_save("late never",  config$late_never,  "late_never")
 
 message("\nAll matching complete.")

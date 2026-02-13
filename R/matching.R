@@ -236,9 +236,13 @@ matching_pipeline <- function(input_path, output_dir = "./models/matching/",
                                method = "nearest", distance = "glm",
                                prefix = NULL,
                                exclude_patterns = NULL,
-                               save_datasets = FALSE) {
+                               save_datasets = FALSE,
+                               treatment_col = "initiation_group",
+                               treatment_value = "never",
+                               exclude_cols = NULL) {
     # Load data
-    data <- load_matching_data(input_path)
+    data <- load_matching_data(input_path, treatment_col = treatment_col,
+                               treatment_value = treatment_value)
 
     # Optionally exclude columns matching patterns
     if (!is.null(exclude_patterns)) {
@@ -247,8 +251,14 @@ matching_pipeline <- function(input_path, output_dir = "./models/matching/",
         }
     }
 
+    # Build exclude_cols if not provided
+    if (is.null(exclude_cols)) {
+        exclude_cols <- c("participant_id", treatment_col, "initiation_timepoint", "treatment")
+    }
+
     # Run matching
-    match_out <- run_matching(data, method = method, distance = distance)
+    match_out <- run_matching(data, method = method, distance = distance,
+                              exclude_cols = exclude_cols)
 
     # Generate prefix if not provided
     if (is.null(prefix)) {prefix <- paste(method, distance, sep = "_")}

@@ -1444,19 +1444,68 @@ def join_never_users(
     )
 
 
+def cap_to_cannabis_users(
+    joined: pd.DataFrame,
+    n_cannabis: int,
+    group: str,
+    random_state: int = 42,
+) -> pd.DataFrame:
+    """Cap alcohol/tobacco users to the number of cannabis users in the same group.
+
+    If there are more alc/tob users than cannabis users for the given initiation
+    group, randomly samples down to match. Never-users are left untouched.
+
+    Args:
+        joined: Never-users dataset with initiation_group column.
+        n_cannabis: Number of cannabis users in this group (after thresholding).
+        group: Initiation group to cap ('early' or 'late').
+        random_state: Random seed for reproducibility.
+
+    Returns:
+        DataFrame with the group capped to n_cannabis participants.
+    """
+    group_participants = (
+        joined
+        .query("initiation_group == @group")
+        ['participant_id'].unique()
+    )
+    n_alctob = len(group_participants)
+
+    if n_alctob <= n_cannabis:
+        return joined
+
+    rng = np.random.default_rng(random_state)
+    keep = rng.choice(group_participants, size=n_cannabis, replace=False)
+
+    return joined.loc[
+        (joined['initiation_group'] != group)
+        | (joined['participant_id'].isin(keep))
+    ]
+
+
 def make_never_users_dataset(
-    full_df: pd.DataFrame, mappings: dict
+    full_df: pd.DataFrame,
+    mappings: dict,
+    cannabis_early: pd.DataFrame,
+    cannabis_late: pd.DataFrame,
+    random_state: int = 42,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Build a dataset of non-cannabis users with alcohol/tobacco use aligned to cannabis users.
 
     This is the top-level function for the "other substance" matching pipeline.
     It identifies non-cannabis users whose alcohol and tobacco use trajectories
     fall within one standard deviation of cannabis users' rates, and combines
-    them with participants who never used any substance.
+    them with participants who never used any substance. The number of early/late
+    alc/tob users is capped to the respective number of cannabis users in the
+    processed matching datasets.
 
     Args:
         full_df: Full dataset DataFrame with MultiIndex (participant_id, session_id).
         mappings: Configuration dictionary containing 'initiation_groups'.
+        cannabis_early: Processed early cannabis matching DataFrame (from
+            make_full_covariates_dataset), used to count treated participants.
+        cannabis_late: Processed late cannabis matching DataFrame.
+        random_state: Random seed for reproducible sampling when capping.
 
     Returns:
         Tuple of (all, early, late) DataFrames, where all contains every
@@ -1472,6 +1521,13 @@ def make_never_users_dataset(
         other_users, cases_other_use_rates, init_points
     )
     joined = join_never_users(full_df, aligned_cannabis_naive, never_users)
+
+    cannabis_counts = {
+        'early': (cannabis_early['initiation_group'] == 'early').sum(),
+        'late': (cannabis_late['initiation_group'] == 'late').sum(),
+    }
+    for group, n in cannabis_counts.items():
+        joined = cap_to_cannabis_users(joined, n, group, random_state)
 
     early = process_group(joined, 'early', mappings, threshold=None)
     late = process_group(joined, 'late', mappings, threshold=None)

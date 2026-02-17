@@ -65,7 +65,9 @@ def main():
     late.to_parquet(filepaths['late'])
 
 
-    full_never, early_never, late_never = make_never_users_dataset(full_df, mappings)
+    full_never, early_never, late_never = make_never_users_dataset(
+        full_df, mappings, early, late
+    )
 
     full_never.to_parquet(filepaths['full_never'])
     early_never.to_parquet(filepaths['early_never'])

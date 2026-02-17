@@ -10,6 +10,7 @@ from abcd_substance_matching.data import (
     subset_biochem,
     subset_midyear,
     subset_selfreport,
+    make_never_users_dataset
 )
 from abcd_substance_matching.utils import load_yaml
 
@@ -62,6 +63,16 @@ def main():
     full_df.to_parquet(filepaths['full_df'])
     early.to_parquet(filepaths['early'])
     late.to_parquet(filepaths['late'])
+
+
+    full_never, early_never, late_never = make_never_users_dataset(
+        full_df, mappings, early, late
+    )
+
+    full_never.to_parquet(filepaths['full_never'])
+    early_never.to_parquet(filepaths['early_never'])
+    late_never.to_parquet(filepaths['late_never'])
+
 
 
 if __name__ == "__main__":

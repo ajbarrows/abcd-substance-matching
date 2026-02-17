@@ -1480,7 +1480,7 @@ def cap_to_cannabis_users(
     return joined.loc[
         (joined['initiation_group'] != group)
         | (joined['participant_id'].isin(keep))
-    ]
+    ].reset_index(drop=True)
 
 
 def make_never_users_dataset(
@@ -1526,10 +1526,11 @@ def make_never_users_dataset(
         'early': (cannabis_early['initiation_group'] == 'early').sum(),
         'late': (cannabis_late['initiation_group'] == 'late').sum(),
     }
-    for group, n in cannabis_counts.items():
-        joined = cap_to_cannabis_users(joined, n, group, random_state)
 
     early = process_group(joined, 'early', mappings, threshold=None)
     late = process_group(joined, 'late', mappings, threshold=None)
+
+    early = cap_to_cannabis_users(early, cannabis_counts['early'], 'early', random_state)
+    late = cap_to_cannabis_users(late, cannabis_counts['late'], 'late', random_state)
 
     return joined, early, late

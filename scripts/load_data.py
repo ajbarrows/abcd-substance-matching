@@ -60,18 +60,18 @@ def main():
         mappings
     )
 
-    full_df.to_parquet(filepaths['full_df'])
-    early.to_parquet(filepaths['early'])
-    late.to_parquet(filepaths['late'])
+    full_df.to_parquet(filepaths['full_df'], index=False)
+    early.to_parquet(filepaths['early'], index=False)
+    late.to_parquet(filepaths['late'], index=False)
 
 
     full_never, early_never, late_never = make_never_users_dataset(
         full_df, mappings, early, late
     )
 
-    full_never.to_parquet(filepaths['full_never'])
-    early_never.to_parquet(filepaths['early_never'])
-    late_never.to_parquet(filepaths['late_never'])
+    full_never.to_parquet(filepaths['full_never'], index=False)
+    early_never.to_parquet(filepaths['early_never'], index=False)
+    late_never.to_parquet(filepaths['late_never'], index=False)
 
 
 

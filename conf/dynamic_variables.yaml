@@ -59,7 +59,10 @@ su_y_hairtox:
 ph_p_pds:
   ph_p_pds__m_categ: puberty_male
   ph_p_pds__f_categ: puberty_female
-# "cbcl_q105_p": Uses drugs for non medical purposes (don't include alcohol or tobacco)
+# "mh_p_cbcl__rule_001: cbcl_q02_p": drinks alcohol without parents' approval (item 02)
+# 'mh_p_cbcl__rule_005: cbcl_q005_p': smokes, chews, or sniffs tobacco (item 99)
+# "mh_p_cbcl__rule__006 "cbcl_q105_p": Uses drugs for non medical purposes (don't include alcohol or tobacco) (item 105)
+
 mh_p_cbcl:
   mh_p_cbcl__aggr_001: cbcl_q19_p
   mh_p_cbcl__aggr_002: cbcl_q20_p
@@ -79,11 +82,11 @@ mh_p_cbcl:
   mh_p_cbcl__aggr__opp_003: cbcl_q23_p
   mh_p_cbcl__aggr__opp_004: cbcl_q86_p
   mh_p_cbcl__aggr__opp_005: cbcl_q95_p
-  mh_p_cbcl__rule_001: cbcl_q02_p
+  # mh_p_cbcl__rule_001: cbcl_q02_p
   mh_p_cbcl__rule_002: cbcl_q63_p
   mh_p_cbcl__rule_003: cbcl_q73_p
   mh_p_cbcl__rule_004: cbcl_q96_p
-  mh_p_cbcl__rule_005: cbcl_q99_p
+  # mh_p_cbcl__rule_005: cbcl_q99_p
   mh_p_cbcl__rule__cond_001: cbcl_q26_p
   mh_p_cbcl__rule__cond_002: cbcl_q28_p
   mh_p_cbcl__rule__cond_003: cbcl_q39_p

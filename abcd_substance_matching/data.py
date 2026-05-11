@@ -1,9 +1,12 @@
 from datetime import timedelta
+import logging
 from pathlib import Path
 
 from dateutil.relativedelta import relativedelta
 import numpy as np
 import pandas as pd
+
+logger = logging.getLogger(__name__)
 
 # Module constant for commonly used index columns
 INDEX_COLS = ['participant_id', 'session_id']
@@ -1157,6 +1160,8 @@ def process_group(
     mappings: dict,
     threshold: int | None = 20,
     substance: str = 'cannabis',
+    checkpoint_dir: str | Path | None = None,
+    label: str | None = None,
 ) -> pd.DataFrame:
     """Process a single initiation group for propensity score matching.
 
@@ -1172,33 +1177,77 @@ def process_group(
         threshold: Minimum cumulative use days to retain treated participants,
             or None to skip the threshold filter.
         substance: Substance column used by lifetime_use_threshold.
+        checkpoint_dir: If provided, write intermediate parquet files here at
+            each filtering step for participant-flow auditing.
+        label: Prefix for checkpoint filenames. Defaults to group.
 
     Returns:
         Wide-format DataFrame ready for matching.
     """
+    tag = label or group
+    if checkpoint_dir is not None:
+        checkpoint_dir = Path(checkpoint_dir)
+        checkpoint_dir.mkdir(parents=True, exist_ok=True)
+
+    def _checkpoint(df: pd.DataFrame, step: str) -> None:
+        if checkpoint_dir is not None:
+            df.to_parquet(checkpoint_dir / f"{tag}_{step}.parquet")
+
     df = full_df.loc[lambda x: x['initiation_group'].isin(['never', group])]
 
     if isinstance(df.index, pd.MultiIndex):
         df = df.reset_index()
 
+    n_cases_start = (df['initiation_group'] == group).sum()
+    n_never_start = (df['initiation_group'] == 'never').sum()
+    logger.info(
+        "%s | after group filter    — cases: %d, never: %d",
+        group, n_cases_start, n_never_start,
+    )
+    _checkpoint(df, '01_post_filter')
+
     if threshold is not None:
         df = df.pipe(lifetime_use_threshold, threshold=threshold, substance=substance)
+        n_cases_thresh = (df['initiation_group'] == group).sum()
+        logger.info(
+            "%s | after use threshold   — cases: %d (dropped %d), never: %d",
+            group, n_cases_thresh, n_cases_start - n_cases_thresh, n_never_start,
+        )
+        _checkpoint(df, '02_post_threshold')
 
-    return (
+    df = (
         df
         .pipe(keep_single_tpt_vars, group)
         .pipe(pivot_wider, mappings[f'{group}_match_timepoints'])
-        .pipe(exclude_incomplete_use_records)
-        .pipe(process_missing_covars)
-        .reset_index()
     )
+    _checkpoint(df, '03_post_pivot')
+
+    n_before_use = len(df)
+    df = df.pipe(exclude_incomplete_use_records)
+    n_after_use = len(df)
+    logger.info(
+        "%s | after use completeness — n: %d (dropped %d)",
+        group, n_after_use, n_before_use - n_after_use,
+    )
+    _checkpoint(df, '04_post_use_completeness')
+
+    df = df.pipe(process_missing_covars)
+    n_after_covars = len(df)
+    logger.info(
+        "%s | after covar filtering  — n: %d (dropped %d)",
+        group, n_after_covars, n_after_use - n_after_covars,
+    )
+    _checkpoint(df, '05_post_covar_filter')
+
+    return df.reset_index()
 
 
 def make_full_covariates_dataset(
     covars: pd.DataFrame,
     tlfb_agg: pd.DataFrame,
     polysubstance: pd.DataFrame,
-    mappings: dict
+    mappings: dict,
+    checkpoint_dir: str | Path | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Create full covariates dataset with early and late subsets.
 
@@ -1207,6 +1256,7 @@ def make_full_covariates_dataset(
         tlfb_agg: Aggregated TLFB DataFrame.
         polysubstance: Polysubstance use DataFrame.
         mappings: Dictionary with match_timepoints.
+        checkpoint_dir: If provided, write intermediate parquet files here.
 
     Returns:
         Tuple of (full_df, early, late) DataFrames.
@@ -1223,8 +1273,8 @@ def make_full_covariates_dataset(
         )
     )
 
-    early = process_group(full_df, 'early', mappings)
-    late = process_group(full_df, 'late', mappings)
+    early = process_group(full_df, 'early', mappings, checkpoint_dir=checkpoint_dir)
+    late = process_group(full_df, 'late', mappings, checkpoint_dir=checkpoint_dir)
 
     return full_df, early, late
 
@@ -1489,6 +1539,7 @@ def make_never_users_dataset(
     cannabis_early: pd.DataFrame,
     cannabis_late: pd.DataFrame,
     random_state: int = 42,
+    checkpoint_dir: str | Path | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Build a dataset of non-cannabis users with alcohol/tobacco use aligned to cannabis users.
 
@@ -1527,8 +1578,13 @@ def make_never_users_dataset(
         'late': (cannabis_late['initiation_group'] == 'late').sum(),
     }
 
-    early = process_group(joined, 'early', mappings, threshold=None)
-    late = process_group(joined, 'late', mappings, threshold=None)
+    early = process_group(joined, 'early', mappings, threshold=None,
+                          checkpoint_dir=checkpoint_dir, label='never_early')
+    late = process_group(joined, 'late', mappings, threshold=None,
+                         checkpoint_dir=checkpoint_dir, label='never_late')
+
+    print(f'Early never-users group before cap: {len(early[early["initiation_group"] == "early"])}')
+    print(f'Late never-users group before cap: {len(late[late["initiation_group"] == "late"])}')
 
     early = cap_to_cannabis_users(early, cannabis_counts['early'], 'early', random_state)
     late = cap_to_cannabis_users(late, cannabis_counts['late'], 'late', random_state)

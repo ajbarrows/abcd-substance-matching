@@ -910,7 +910,7 @@ def process_covars(
 def pivot_wider(
     df: pd.DataFrame,
     match_timepoints: list,
-    constant_vars: str = 'sex|income|ethnicity|parent|prenatal|age|initiation'
+    constant_vars: str = 'sex|income|ethnicity|parent|prenatal|age|initiation|family'
 ) -> pd.DataFrame:
     """Pivot DataFrame to wide format for matching.
 
@@ -1231,15 +1231,22 @@ def process_group(
     )
     _checkpoint(df, '04_post_use_completeness')
 
-    df = df.pipe(process_missing_covars)
-    n_after_covars = len(df)
+    passthrough_cols = [c for c in mappings.get('passthrough_vars', []) if c in df.columns]
+    passthrough = df[passthrough_cols] if passthrough_cols else None
+    df_covars = df.drop(columns=passthrough_cols) if passthrough_cols else df
+
+    df_covars = df_covars.pipe(process_missing_covars)
+    if passthrough is not None:
+        df_covars = df_covars.join(passthrough.loc[df_covars.index])
+
+    n_after_covars = len(df_covars)
     logger.info(
         "%s | after covar filtering  — n: %d (dropped %d)",
         group, n_after_covars, n_after_use - n_after_covars,
     )
-    _checkpoint(df, '05_post_covar_filter')
+    _checkpoint(df_covars, '05_post_covar_filter')
 
-    return df.reset_index()
+    return df_covars.reset_index()
 
 
 def make_full_covariates_dataset(

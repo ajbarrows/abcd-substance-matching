@@ -1109,6 +1109,35 @@ def keep_single_tpt_vars(df: pd.DataFrame, group: str) -> pd.DataFrame:
     )
 
 
+def exclude_never_with_gaps(df: pd.DataFrame, timepoints: list[str]) -> pd.DataFrame:
+    """Exclude never-users whose substance-use records have gaps.
+
+    A never-user is retained only if they have a substance-use record (non-missing
+    ``any_use``) at every timepoint from the first in ``timepoints`` through their
+    last observed one. Dropping out is allowed; missing a visit and returning is not,
+    since use during the skipped visit would go unrecorded. Other groups are untouched.
+
+    Args:
+        df: Long-format DataFrame with participant_id, session_id, any_use and
+            initiation_group columns.
+        timepoints: Ordered session_ids, starting with baseline.
+
+    Returns:
+        Filtered DataFrame.
+    """
+    order = {tp: i for i, tp in enumerate(timepoints)}
+    observed = (
+        df
+        .dropna(subset=['any_use'])
+        .assign(_tp=lambda x: x['session_id'].map(order))
+        .groupby('participant_id')['_tp']
+        .agg(['max', 'nunique', 'min'])
+    )
+    # Records at 0..max with no repeats-or-gaps <=> min == 0 and nunique == max + 1
+    contiguous = observed.index[(observed['min'] == 0) & (observed['nunique'] == observed['max'] + 1)]
+    return df[df['participant_id'].isin(contiguous) | (df['initiation_group'] != 'never')]
+
+
 def exclude_incomplete_use_records(df: pd.DataFrame) -> pd.DataFrame:
     """Exclude records with incomplete use data.
 
@@ -1162,6 +1191,7 @@ def process_group(
     substance: str = 'cannabis',
     checkpoint_dir: str | Path | None = None,
     label: str | None = None,
+    exclude_never_gaps: bool = False,
 ) -> pd.DataFrame:
     """Process a single initiation group for propensity score matching.
 
@@ -1180,6 +1210,9 @@ def process_group(
         checkpoint_dir: If provided, write intermediate parquet files here at
             each filtering step for participant-flow auditing.
         label: Prefix for checkpoint filenames. Defaults to group.
+        exclude_never_gaps: If True, drop never-users with gaps in their
+            substance-use records across mappings['timepoints'] (see
+            exclude_never_with_gaps).
 
     Returns:
         Wide-format DataFrame ready for matching.
@@ -1214,6 +1247,16 @@ def process_group(
             group, n_cases_thresh, n_cases_start - n_cases_thresh, n_never_start,
         )
         _checkpoint(df, '02_post_threshold')
+
+    if exclude_never_gaps:
+        n_never_before = df.loc[df['initiation_group'] == 'never', 'participant_id'].nunique()
+        df = df.pipe(exclude_never_with_gaps, mappings['timepoints'])
+        n_never_after = df.loc[df['initiation_group'] == 'never', 'participant_id'].nunique()
+        logger.info(
+            "%s | after never-user gaps — never participants: %d (dropped %d)",
+            group, n_never_after, n_never_before - n_never_after,
+        )
+        _checkpoint(df, '02b_post_never_gaps')
 
     df = (
         df
@@ -1255,6 +1298,7 @@ def make_full_covariates_dataset(
     polysubstance: pd.DataFrame,
     mappings: dict,
     checkpoint_dir: str | Path | None = None,
+    exclude_never_gaps: bool = False,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Create full covariates dataset with early and late subsets.
 
@@ -1264,6 +1308,8 @@ def make_full_covariates_dataset(
         polysubstance: Polysubstance use DataFrame.
         mappings: Dictionary with match_timepoints.
         checkpoint_dir: If provided, write intermediate parquet files here.
+        exclude_never_gaps: Passed to process_group; drops never-users with gaps
+            in their substance-use records.
 
     Returns:
         Tuple of (full_df, early, late) DataFrames.
@@ -1280,8 +1326,10 @@ def make_full_covariates_dataset(
         )
     )
 
-    early = process_group(full_df, 'early', mappings, checkpoint_dir=checkpoint_dir)
-    late = process_group(full_df, 'late', mappings, checkpoint_dir=checkpoint_dir)
+    early = process_group(full_df, 'early', mappings, checkpoint_dir=checkpoint_dir,
+                          exclude_never_gaps=exclude_never_gaps)
+    late = process_group(full_df, 'late', mappings, checkpoint_dir=checkpoint_dir,
+                         exclude_never_gaps=exclude_never_gaps)
 
     return full_df, early, late
 
@@ -1547,6 +1595,7 @@ def make_never_users_dataset(
     cannabis_late: pd.DataFrame,
     random_state: int = 42,
     checkpoint_dir: str | Path | None = None,
+    exclude_never_gaps: bool = False,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Build a dataset of non-cannabis users with alcohol/tobacco use aligned to cannabis users.
 
@@ -1564,6 +1613,9 @@ def make_never_users_dataset(
             make_full_covariates_dataset), used to count treated participants.
         cannabis_late: Processed late cannabis matching DataFrame.
         random_state: Random seed for reproducible sampling when capping.
+        checkpoint_dir: If provided, write intermediate parquet files here.
+        exclude_never_gaps: Passed to process_group; drops never-users with gaps
+            in their substance-use records.
 
     Returns:
         Tuple of (all, early, late) DataFrames, where all contains every
@@ -1586,9 +1638,11 @@ def make_never_users_dataset(
     }
 
     early = process_group(joined, 'early', mappings, threshold=None,
-                          checkpoint_dir=checkpoint_dir, label='never_early')
+                          checkpoint_dir=checkpoint_dir, label='never_early',
+                          exclude_never_gaps=exclude_never_gaps)
     late = process_group(joined, 'late', mappings, threshold=None,
-                         checkpoint_dir=checkpoint_dir, label='never_late')
+                         checkpoint_dir=checkpoint_dir, label='never_late',
+                         exclude_never_gaps=exclude_never_gaps)
 
     print(f'Early never-users group before cap: {len(early[early["initiation_group"] == "early"])}')
     print(f'Late never-users group before cap: {len(late[late["initiation_group"] == "late"])}')

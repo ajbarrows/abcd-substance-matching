@@ -584,7 +584,9 @@ def make_polysubstance(
         mappings: Dictionary with substances list.
 
     Returns:
-        DataFrame with cumulative use columns for each substance.
+        DataFrame with cumulative use columns for each substance: running totals of
+        use days through each session. Each session's TLFB covers only the interval
+        since the previous interview, so per-session use days are summed over sessions.
     """
     substances = mappings['substances']
 
@@ -600,7 +602,13 @@ def make_polysubstance(
             )
         ], axis=1)
 
-    return polysubstance.fillna(0)
+    return (
+        polysubstance
+        .fillna(0)
+        .sort_index()
+        .groupby(level='participant_id')
+        .cumsum()
+    )
 
 
 def zero_pad_aggregation(

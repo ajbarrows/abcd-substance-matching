@@ -790,10 +790,12 @@ def load_cbcl(df: pd.DataFrame, keep_vars: list, variables: list) -> pd.DataFram
         DataFrame with CBCL scores.
     """
     def cbcl_external_nodrug(df, variables):
+        # Items are scored 0-2; other codes (777 decline, 999 don't know) are missing
         return (
             df
             .filter(items=variables)
             .astype('float')
+            .pipe(lambda x: x.where(x.isin([0, 1, 2])))
             .dropna(how='all')
             .assign(cbcl_external_nodrug=lambda x: x.sum(axis=1, skipna=False))
             .filter(items=['cbcl_external_nodrug'])
